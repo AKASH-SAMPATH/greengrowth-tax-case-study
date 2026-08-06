@@ -7,11 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ============================================================
-   GreenGrowth Tax — design tokens
-   Type: Public Sans (the USWDS face — the vernacular of tax forms)
-   Numbers: Spline Sans Mono, tabular — every figure is data
-   ============================================================ */
 :root{
   --ink:#16211C; --ink-2:#3D4A44; --ink-3:#68746E;
   --paper:#F7F6F0; --surface:#FFFFFF; --line:#E3E0D4; --line-2:#D3CFC0;
@@ -33,7 +28,6 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 
-/* ---------- app shell ---------- */
 .shell{display:flex;min-height:100vh}
 .sidebar{width:216px;flex-shrink:0;background:var(--ink);color:#E9EDEA;display:flex;flex-direction:column;padding:20px 12px;position:sticky;top:0;height:100vh}
 .logo{display:flex;align-items:center;gap:9px;padding:4px 10px 22px;font-weight:800;font-size:1.05rem;letter-spacing:-.02em}
@@ -54,7 +48,6 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .crumbs .here{color:var(--ink);font-weight:600}
 .content{padding:24px 26px 80px;max-width:1180px;width:100%}
 
-/* ---------- chips: the affordance system (Challenge 08) ---------- */
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid;white-space:nowrap}
 .chip-ai{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-line)}
 .chip-verified{color:var(--green);background:var(--green-bg);border-color:var(--green-line)}
@@ -64,7 +57,7 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
 .dot-ai{background:var(--amber)} .dot-ok{background:var(--green)} .dot-red{background:var(--red)} .dot-slate{background:var(--slate)}
 
-/* ---------- dashboard (Challenge 07) ---------- */
+/* ---------- dashboard  ---------- */
 .page-head{margin-bottom:18px}
 .page-head h1{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
 .page-head p{color:var(--ink-3);font-size:.92rem;margin-top:2px}
@@ -304,13 +297,6 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 <div class="pal" id="pal" onclick="if(event.target===this)closePalette()"></div>
 
 <script>
-/* ================================================================
-   GreenGrowth Tax — prototype application layer
-   Vanilla JS, no build step. All data below is fabricated by hand
-   (or deterministically generated) to exercise the UI against
-   realistic states, per the case study brief. No OCR, no AI model,
-   no backend exists behind this file.
-   ================================================================ */
 
 /* ---------------- mock data ---------------- */
 const DOCS = {
