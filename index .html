@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenGrowth Tax — Return Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   GreenGrowth Tax — design tokens
+   Type: Public Sans (the USWDS face — the vernacular of tax forms)
+   Numbers: Spline Sans Mono, tabular — every figure is data
+   ============================================================ */
+:root{
+  --ink:#16211C; --ink-2:#3D4A44; --ink-3:#68746E;
+  --paper:#F7F6F0; --surface:#FFFFFF; --line:#E3E0D4; --line-2:#D3CFC0;
+  --green:#1F6F50; --green-bg:#EAF3EE; --green-line:#BFDCCB;
+  --amber:#A46108; --amber-bg:#FBF3E4; --amber-line:#E8D3A8;
+  --red:#A83232; --red-bg:#F9ECEC; --red-line:#E4BFBF;
+  --slate:#6B7280; --slate-bg:#F0F0EC;
+  --blue:#2A5B8F; --blue-bg:#EBF1F7;
+  --r:8px; --r-lg:12px;
+  --shadow:0 1px 2px rgba(22,33,28,.06),0 4px 16px rgba(22,33,28,.07);
+  --shadow-lg:0 4px 8px rgba(22,33,28,.08),0 16px 40px rgba(22,33,28,.14);
+  --mono:'Spline Sans Mono',ui-monospace,monospace;
+  --sans:'Public Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ---------- app shell ---------- */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:216px;flex-shrink:0;background:var(--ink);color:#E9EDEA;display:flex;flex-direction:column;padding:20px 12px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:9px;padding:4px 10px 22px;font-weight:800;font-size:1.05rem;letter-spacing:-.02em}
+.logo-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#2E8B63,#1F6F50);display:grid;place-items:center;font-size:.8rem;font-weight:800;color:#fff}
+.nav-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:#8FA098;padding:14px 10px 6px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border-radius:7px;color:#C6D0CA;font-weight:500;font-size:.92rem}
+.nav-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-btn.active{background:rgba(46,139,99,.28);color:#fff;font-weight:600}
+.nav-btn .ico{width:17px;text-align:center;opacity:.85}
+.sidebar-foot{margin-top:auto;padding:10px;border-top:1px solid rgba(255,255,255,.1);font-size:.8rem;color:#8FA098}
+.sidebar-foot b{color:#D9E1DC;display:block;font-weight:600}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 26px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.crumbs{display:flex;align-items:center;gap:7px;font-size:.88rem;color:var(--ink-3);flex-wrap:wrap}
+.crumbs button{color:var(--blue);font-weight:500}
+.crumbs button:hover{text-decoration:underline}
+.crumbs .sep{color:var(--line-2)}
+.crumbs .here{color:var(--ink);font-weight:600}
+.content{padding:24px 26px 80px;max-width:1180px;width:100%}
+
+/* ---------- chips: the affordance system (Challenge 08) ---------- */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid;white-space:nowrap}
+.chip-ai{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-line)}
+.chip-verified{color:var(--green);background:var(--green-bg);border-color:var(--green-line)}
+.chip-locked{color:var(--slate);background:var(--slate-bg);border-color:var(--line-2)}
+.chip-blocked{color:var(--red);background:var(--red-bg);border-color:var(--red-line)}
+.chip-client{color:var(--blue);background:var(--blue-bg);border-color:#C4D4E4}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot-ai{background:var(--amber)} .dot-ok{background:var(--green)} .dot-red{background:var(--red)} .dot-slate{background:var(--slate)}
+
+/* ---------- dashboard (Challenge 07) ---------- */
+.page-head{margin-bottom:18px}
+.page-head h1{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.page-head p{color:var(--ink-3);font-size:.92rem;margin-top:2px}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:13px 15px}
+.stat .k{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.stat .v{font-size:1.55rem;font-weight:700;margin-top:2px}
+.stat .v.red{color:var(--red)} .stat .v.amber{color:var(--amber)} .stat .v.green{color:var(--green)}
+.queue{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.queue-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.queue-head h2{font-size:1rem;font-weight:700}
+.queue-head .sub{font-size:.8rem;color:var(--ink-3)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:99px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface)}
+.filter-btn.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.q-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:13px 18px;border-bottom:1px solid var(--line)}
+.q-row:last-child{border-bottom:none}
+.q-row:hover{background:#FCFBF7}
+.q-rank{font-family:var(--mono);font-size:.8rem;color:var(--ink-3);width:20px;flex-shrink:0}
+.q-main{flex:1;min-width:0}
+.q-title{font-weight:600;font-size:.95rem}
+.q-why{font-size:.82rem;color:var(--ink-3);margin-top:1px}
+.q-why b{font-weight:600}.q-why b.bad{color:var(--red)}.q-why b.good{color:var(--green)}.q-why b.warn{color:var(--amber)}
+.q-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.q-due{font-size:.78rem;color:var(--ink-3)}
+.q-cta{font-size:.82rem;font-weight:600;color:var(--green);flex-shrink:0}
+
+/* ---------- return workspace ---------- */
+.ret-head{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:16px}
+.ret-head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.ret-title{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+.ret-sub{font-size:.85rem;color:var(--ink-3);margin-top:2px}
+/* status pipeline (Challenge 06) */
+.pipeline{display:flex;align-items:flex-start;gap:0;margin-top:16px;overflow-x:auto;padding-bottom:4px}
+.pstep{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:104px;position:relative;text-align:center}
+.pstep::before{content:'';position:absolute;top:10px;left:-50%;width:100%;height:2px;background:var(--line-2)}
+.pstep:first-child::before{display:none}
+.pstep.done::before,.pstep.now::before{background:var(--green)}
+.p-dot{width:21px;height:21px;border-radius:50%;border:2px solid var(--line-2);background:var(--surface);z-index:1;display:grid;place-items:center;font-size:.6rem;color:#fff}
+.pstep.done .p-dot{background:var(--green);border-color:var(--green)}
+.pstep.now .p-dot{border-color:var(--green);background:var(--surface);box-shadow:0 0 0 4px var(--green-bg)}
+.pstep.now .p-dot::after{content:'';width:9px;height:9px;border-radius:50%;background:var(--green)}
+.p-name{font-size:.74rem;font-weight:600;color:var(--ink-3)}
+.pstep.now .p-name{color:var(--ink)}
+.p-date{font-size:.68rem;color:var(--ink-3)}
+.owner-strip{display:flex;align-items:center;gap:8px;margin-top:12px;padding:9px 13px;background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:var(--r);font-size:.85rem}
+.owner-strip.ok{background:var(--green-bg);border-color:var(--green-line)}
+.owner-strip b{font-weight:700}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:16px}
+.tab{padding:9px 15px;font-size:.9rem;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab .badge{display:inline-block;font-size:.68rem;font-weight:700;background:var(--red);color:#fff;border-radius:99px;padding:0 6px;margin-left:5px;vertical-align:1px}
+
+/* ---------- review: fields + trace (Challenges 01, 08, 10) ---------- */
+.review-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;align-items:start}
+.form-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.form-sec{padding:14px 18px 6px;border-bottom:1px solid var(--line)}
+.form-sec:last-child{border-bottom:none}
+.form-sec h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:8px}
+.field{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 10px;margin:0 -10px 6px;border-radius:var(--r);border:1px solid transparent}
+.field.traceable:hover{background:#FCFBF7;border-color:var(--line)}
+.field.selected{background:var(--green-bg);border-color:var(--green-line)}
+.f-line{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);width:52px;flex-shrink:0}
+.f-label{flex:1;min-width:0;font-size:.92rem}
+.f-label small{display:block;font-size:.76rem;color:var(--ink-3)}
+.f-val{font-family:var(--mono);font-size:1rem;font-weight:600;text-align:right}
+.f-state{width:118px;flex-shrink:0;display:flex;justify-content:flex-end}
+.field.locked .f-val{color:var(--slate)}
+.field.locked{cursor:not-allowed}
+.f-trace-hint{font-size:.72rem;color:var(--green);font-weight:600;opacity:0;transition:opacity .12s;width:64px;text-align:right;flex-shrink:0}
+.field.traceable:hover .f-trace-hint,.field.selected .f-trace-hint{opacity:1}
+
+/* trace panel — the signature element */
+.trace{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);position:sticky;top:76px;box-shadow:var(--shadow);overflow:hidden;max-height:calc(100vh - 100px);display:flex;flex-direction:column}
+.trace-empty{padding:40px 24px;text-align:center;color:var(--ink-3)}
+.trace-empty .big{font-size:1.6rem;margin-bottom:8px}
+.trace-head{padding:13px 16px;border-bottom:1px solid var(--line);background:#FCFBF7}
+.trace-head .t{font-weight:700;font-size:.95rem}
+.trace-head .s{font-size:.78rem;color:var(--ink-3)}
+.trace-body{overflow-y:auto;padding:14px 16px}
+.doc-mock{border:1px solid var(--line-2);border-radius:var(--r);background:#fff;padding:14px;font-size:.72rem;box-shadow:inset 0 1px 3px rgba(0,0,0,.04)}
+.doc-mock .doc-t{font-weight:800;font-size:.78rem;letter-spacing:.02em;border-bottom:2px solid var(--ink);padding-bottom:4px;margin-bottom:8px;display:flex;justify-content:space-between}
+.doc-row{display:flex;justify-content:space-between;padding:3px 4px;border-radius:4px;color:var(--ink-2)}
+.doc-row.hl{background:var(--amber-bg);outline:2px solid var(--amber);font-weight:700;color:var(--ink);position:relative;margin-top:17px}
+.doc-row.hl::after{content:'extracted';position:absolute;right:-2px;top:-14px;font-size:.58rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em}
+.doc-cap{font-size:.72rem;color:var(--ink-3);margin:6px 2px 14px;display:flex;justify-content:space-between}
+.chain{margin:4px 0 14px;position:relative;padding-left:19px}
+.chain::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--line-2)}
+.ch-step{position:relative;padding:5px 0 5px 4px;font-size:.84rem}
+.ch-step::before{content:'';position:absolute;left:-17px;top:11px;width:9px;height:9px;border-radius:50%;background:var(--surface);border:2px solid var(--slate)}
+.ch-step.src::before{border-color:var(--amber)} .ch-step.dst::before{border-color:var(--green);background:var(--green)}
+.ch-step .k{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);display:block}
+.ch-step .num{font-weight:600}
+.conf{display:flex;align-items:center;gap:9px;margin-bottom:12px;font-size:.82rem}
+.conf-bar{flex:1;height:6px;background:var(--slate-bg);border-radius:99px;overflow:hidden}
+.conf-fill{height:100%;border-radius:99px}
+.trace-actions{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:#FCFBF7}
+.btn{font-size:.86rem;font-weight:600;padding:8px 14px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface)}
+.btn:hover{border-color:var(--ink-3)}
+.btn-primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn-primary:hover{background:#185C42}
+.btn-danger-ghost{color:var(--red)}
+.correct-box{margin-top:4px;padding:12px;border:1px solid var(--amber-line);background:var(--amber-bg);border-radius:var(--r)}
+.correct-box label{font-size:.78rem;font-weight:600;display:block;margin-bottom:5px}
+.correct-box input{width:100%;font-family:var(--mono);font-size:.95rem;padding:7px 10px;border:1px solid var(--line-2);border-radius:6px;margin-bottom:8px}
+.note{font-size:.78rem;color:var(--ink-3);line-height:1.45}
+
+/* ---------- messages (Challenge 02) ---------- */
+.msg-wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.thread-list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.th-item{display:block;width:100%;text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+.th-item:last-child{border-bottom:none}
+.th-item:hover{background:#FCFBF7}
+.th-item.active{background:var(--green-bg)}
+.th-title{font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:6px;justify-content:space-between}
+.th-sub{font-size:.76rem;color:var(--ink-3);margin-top:2px}
+.thread{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.thread-head{padding:13px 16px;border-bottom:1px solid var(--line)}
+.thread-head .t{font-weight:700}
+.linked{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--blue);background:var(--blue-bg);border:1px solid #C4D4E4;padding:3px 9px;border-radius:99px;margin-top:6px;font-weight:600}
+.linked:hover{text-decoration:underline}
+.msgs{padding:14px 16px;display:flex;flex-direction:column;gap:11px;max-height:430px;overflow-y:auto}
+.msg{max-width:82%;border-radius:var(--r-lg);padding:9px 13px;font-size:.88rem;border:1px solid var(--line)}
+.msg .who{font-size:.72rem;font-weight:700;margin-bottom:2px;display:flex;gap:7px;align-items:center}
+.msg .when{font-weight:400;color:var(--ink-3)}
+.msg.me{align-self:flex-end;background:var(--green-bg);border-color:var(--green-line)}
+.msg.them{align-self:flex-start;background:var(--surface)}
+.msg.internal{align-self:flex-end;background:var(--amber-bg);border-color:var(--amber-line);border-style:dashed}
+.msg.internal .who .tag{color:var(--amber)}
+.req{align-self:stretch;max-width:none;background:var(--blue-bg);border:1px solid #C4D4E4;border-radius:var(--r);padding:10px 13px;font-size:.85rem;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.req b{font-weight:700}
+.composer{border-top:1px solid var(--line);padding:12px 16px}
+.mode-toggle{display:inline-flex;border:1px solid var(--line-2);border-radius:99px;overflow:hidden;margin-bottom:9px}
+.mode-toggle button{font-size:.76rem;font-weight:600;padding:5px 12px;color:var(--ink-3)}
+.mode-toggle button.on-client{background:var(--blue);color:#fff}
+.mode-toggle button.on-internal{background:var(--amber);color:#fff}
+.composer textarea{width:100%;font:inherit;font-size:.88rem;border:1px solid var(--line-2);border-radius:var(--r);padding:9px 11px;resize:vertical;min-height:54px}
+.composer .row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+.composer .hint{font-size:.75rem;color:var(--ink-3)}
+
+/* ---------- toast, docs tab, misc ---------- */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;font-size:.86rem;font-weight:500;padding:10px 18px;border-radius:99px;box-shadow:var(--shadow-lg);transition:transform .25s;z-index:99}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.doc-list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.doc-item{display:flex;align-items:center;gap:13px;padding:12px 16px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.doc-item:last-child{border-bottom:none}
+.doc-item:hover{background:#FCFBF7}
+.doc-ico{width:34px;height:40px;border:1px solid var(--line-2);border-radius:4px;background:#fff;display:grid;place-items:center;font-size:.6rem;font-weight:700;color:var(--ink-3);flex-shrink:0}
+.doc-name{font-weight:600;font-size:.9rem}
+.doc-sub{font-size:.78rem;color:var(--ink-3)}
+.doc-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.empty-note{padding:14px 16px;font-size:.85rem;color:var(--ink-3)}
+@media(max-width:980px){
+  .review-grid{grid-template-columns:1fr}
+  .trace{position:fixed;inset:auto 0 0 0;max-height:62vh;border-radius:16px 16px 0 0;box-shadow:var(--shadow-lg);z-index:60}
+  .msg-wrap{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .f-state{width:auto}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- topbar controls, role switch, ⌘K ---------- */
+.topctl{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.kbtn{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:700;font-family:var(--mono);border:1px solid var(--line-2);border-radius:7px;padding:5px 10px;color:var(--ink-3);background:var(--surface)}
+.kbtn:hover{border-color:var(--ink-3);color:var(--ink)}
+.kbtn-l{font-family:var(--sans);font-weight:500}
+.roleswitch{display:flex;align-items:center;gap:0;border:1px solid var(--line-2);border-radius:99px;overflow:hidden}
+.roleswitch .rs-l{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);padding:0 9px;border-right:1px solid var(--line)}
+.roleswitch button{font-size:.78rem;font-weight:600;padding:6px 12px;color:var(--ink-3)}
+.roleswitch button.on{background:var(--ink);color:#fff}
+.kbd{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:600;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--surface);color:var(--ink-2)}
+/* ---------- re-extraction diff (10) ---------- */
+.chip-diff{color:#7A3EA1;background:#F4EDFA;border-color:#D9C6EC}
+.diff-box{border:1px solid #D9C6EC;background:#F9F5FD;border-radius:var(--r);padding:12px;margin-bottom:13px;font-size:.85rem}
+.diff-box>b{color:#7A3EA1;font-size:.85rem}
+.diff-cmp{display:flex;align-items:center;gap:14px;margin:9px 0;font-size:.8rem;color:var(--ink-3)}
+.diff-cmp .num{font-size:1.05rem;font-weight:700;color:var(--ink)}
+.diff-arrow{font-size:1.2rem;color:#7A3EA1}
+/* ---------- audit history ---------- */
+.hist{margin-top:14px;border-top:1px dashed var(--line-2);padding-top:10px}
+.hist-t{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:6px}
+.hist-row{display:flex;gap:10px;font-size:.78rem;padding:2px 0;color:var(--ink-2)}
+.hist-when{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);width:64px;flex-shrink:0}
+/* ---------- all items (09) ---------- */
+.items-bar{display:flex;flex-direction:column;gap:9px;margin-bottom:10px}
+.items-bar input{font:inherit;font-size:.92rem;padding:10px 14px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);width:100%}
+.items-sum{font-size:.82rem;color:var(--ink-3);margin-bottom:9px}
+.items-sum b.warn{color:var(--amber)} .items-sum b.bad{color:var(--red)}
+.ig{border-bottom:1px solid var(--line)} .ig:last-child{border-bottom:none}
+.ig-head{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:12px 18px;font-size:.92rem}
+.ig-head:hover{background:#FCFBF7}
+.ig-sum{color:var(--ink-3);font-size:.82rem} .ig-sum b.warn{color:var(--amber)}
+.ig-caret{color:var(--ink-3);width:12px}
+.ig-row{display:flex;align-items:center;gap:12px;padding:7px 18px 7px 39px;font-size:.85rem;border-top:1px solid #F1EFE6}
+.ig-name{flex:1;min-width:0} .ig-name mark{background:var(--amber-bg);color:inherit;border-radius:3px;padding:0 1px}
+.ig-when{font-family:var(--mono);font-size:.72rem;color:var(--ink-3)}
+.ig-more{display:block;width:100%;text-align:center;padding:8px;font-size:.8rem;font-weight:600;color:var(--blue);border-top:1px solid #F1EFE6}
+.ig-more:hover{background:#FCFBF7}
+/* ---------- client home (03) ---------- */
+.welcome{margin-bottom:18px}
+.welcome h1{font-size:1.6rem;font-weight:800;letter-spacing:-.02em}
+.welcome p{color:var(--ink-2);font-size:1rem;margin-top:4px;max-width:560px}
+.tasks{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.task{display:flex;align-items:center;gap:14px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px 18px;box-shadow:var(--shadow)}
+.task:hover{border-color:var(--green-line)}
+.task.done{opacity:.7;box-shadow:none;cursor:default}
+.task-n{width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;display:grid;place-items:center;flex-shrink:0}
+.task.done .task-n{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}
+.task-main{flex:1;min-width:0} .task-main b{font-size:1rem} .task-main small{display:block;color:var(--ink-3);font-size:.82rem;margin-top:1px}
+.demo-note{align-self:stretch;max-width:none;font-size:.76rem;color:var(--ink-3);border:1px dashed var(--line-2);border-radius:var(--r);padding:8px 12px;background:var(--paper)}
+/* ---------- command palette ---------- */
+.pal{position:fixed;inset:0;background:rgba(22,33,28,.4);display:none;z-index:100;padding:12vh 16px 0}
+.pal.open{display:block}
+.pal-box{max-width:560px;margin:0 auto;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden}
+.pal-box input{width:100%;font:inherit;font-size:1rem;padding:15px 18px;border:none;border-bottom:1px solid var(--line);outline:none}
+.pal-list{max-height:330px;overflow-y:auto;padding:6px}
+.pal-it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 12px;border-radius:8px;font-size:.9rem}
+.pal-it.sel{background:var(--green-bg)}
+.pal-it mark{background:var(--amber-bg);border-radius:3px;padding:0 1px}
+.pal-k{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);background:var(--slate-bg);border-radius:5px;padding:2px 7px;width:76px;text-align:center;flex-shrink:0}
+.pal-foot{display:flex;gap:12px;padding:9px 16px;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-3);background:#FCFBF7}
+@media(max-width:980px){.roleswitch .rs-l{display:none}.kbtn-l{display:none}}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar"><div class="crumbs" id="crumbs"></div><div class="topctl" id="topctl"></div></div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="pal" id="pal" onclick="if(event.target===this)closePalette()"></div>
+
+<script>
+/* ================================================================
+   GreenGrowth Tax — prototype application layer
+   Vanilla JS, no build step. All data below is fabricated by hand
+   (or deterministically generated) to exercise the UI against
+   realistic states, per the case study brief. No OCR, no AI model,
+   no backend exists behind this file.
+   ================================================================ */
+
+/* ---------------- mock data ---------------- */
+const DOCS = {
+  w2: {name:"W-2 — Meridian Health Systems", kind:"W-2", pages:1, uploaded:"Jul 28", by:"Client",
+    render:[["Box 1 — Wages, tips, other comp","98,450.00","wages"],
+            ["Box 2 — Federal income tax withheld","14,210.00","withheld"],
+            ["Box 12a — Code D (401k)","6,500.00",null],
+            ["Box 17 — State income tax","4,880.00",null]]},
+  int1099:{name:"1099-INT — First Chicago Bank", kind:"1099-INT", pages:1, uploaded:"Jul 28", by:"Client",
+    render:[["Box 1 — Interest income","642.18","interest"],
+            ["Box 4 — Federal tax withheld","0.00",null]]},
+  div1099:{name:"1099-DIV — Vanguard Brokerage", kind:"1099-DIV", pages:2, uploaded:"Aug 1", by:"Client",
+    render:[["Box 1a — Total ordinary dividends","1,893.40","div"],
+            ["Box 1b — Qualified dividends","1,655.02","qdiv"],
+            ["Box 2a — Capital gain distributions","412.77","capg"]]},
+};
+
+const FIELDS = [
+ {sec:"Income", rows:[
+  {line:"1a", label:"Wages, salaries, tips", sub:"Form(s) W-2, Box 1", val:98450.00, state:"verified", doc:"w2", hl:"wages",
+   chain:[{k:"Source",v:"$98,450.00 · W-2 Box 1"},{k:"Transform",v:"None — direct carry"},{k:"Return field",v:"$98,450.00 · Form 1040, line 1a"}],
+   conf:99, verifiedBy:"Dana Reyes · Aug 3",
+   hist:[["Aug 2","Extracted from W-2 (AI, 99%)"],["Aug 3","Verified against source — Dana Reyes"]]},
+  {line:"2b", label:"Taxable interest", sub:"Schedule B, line 4", val:642.18, state:"ai", doc:"int1099", hl:"interest",
+   chain:[{k:"Source",v:"$642.18 · 1099-INT Box 1"},{k:"Transform",v:"None — direct carry"},{k:"Return field",v:"$642.18 · Form 1040, line 2b"}],
+   conf:98, hist:[["Aug 2","Extracted from 1099-INT (AI, 98%)"]]},
+  {line:"3a", label:"Qualified dividends", sub:"Form 1099-DIV, Box 1b", val:1655.02, state:"ai", doc:"div1099", hl:"qdiv",
+   chain:[{k:"Source",v:"$1,655.02 · 1099-DIV Box 1b"},{k:"Transform",v:"None — direct carry"},{k:"Return field",v:"$1,655.02 · Form 1040, line 3a"}],
+   conf:96, hist:[["Aug 2","Extracted from 1099-DIV (AI, 96%)"]]},
+  {line:"3b", label:"Ordinary dividends", sub:"Form 1099-DIV, Box 1a", val:1893.40, state:"ai", doc:"div1099", hl:"div",
+   chain:[{k:"Source",v:"$1,893.40 · 1099-DIV Box 1a"},{k:"Transform",v:"None — direct carry"},{k:"Return field",v:"$1,893.40 · Form 1040, line 3b"}],
+   conf:71, warn:"Low confidence: the scanned page is skewed and Box 1a partially overlaps a fold line. Verify against the source.",
+   hist:[["Aug 2","Extracted from 1099-DIV (AI, 71% — fold across Box 1a)"]]},
+  {line:"7", label:"Capital gain or (loss)", sub:"Cap gain distributions, no Sch. D required", val:412.77, state:"ai", doc:"div1099", hl:"capg",
+   chain:[{k:"Source",v:"$412.77 · 1099-DIV Box 2a"},{k:"Transform",v:"Checked: no other Sch. D transactions → box on 1040 line 7 ticked"},{k:"Return field",v:"$412.77 · Form 1040, line 7"}],
+   conf:94, hist:[["Aug 2","Extracted from 1099-DIV (AI, 94%)"]]},
+ ]},
+ {sec:"Tax & payments", rows:[
+  {line:"9", label:"Total income", sub:"Sum of lines 1–8", val:101398.35, state:"locked",
+   lockWhy:"Calculated field. It updates automatically when its inputs change — edit the source lines instead. Even locked values still show their full math.",
+   chain:[{k:"Inputs",v:"Lines 1a, 2b, 3b, 7"},{k:"Transform",v:"98,450.00 + 642.18 + 1,893.40 + 412.77"},{k:"Return field",v:"$101,398.35 · Form 1040, line 9"}],
+   hist:[["Aug 2","Calculated from lines 1a, 2b, 3b, 7"]]},
+  {line:"25a", label:"Federal tax withheld — W-2", sub:"Form W-2, Box 2", val:14210.00, state:"verified", doc:"w2", hl:"withheld",
+   chain:[{k:"Source",v:"$14,210.00 · W-2 Box 2"},{k:"Transform",v:"None — direct carry"},{k:"Return field",v:"$14,210.00 · Form 1040, line 25a"}],
+   conf:99, verifiedBy:"Dana Reyes · Aug 3",
+   hist:[["Aug 2","Extracted from W-2 (AI, 99%)"],["Aug 3","Verified against source — Dana Reyes"]]},
+  {line:"—", label:"Estimated payments, Q2", sub:"Client-reported — no source document yet", val:2500.00, state:"blocked",
+   blockWhy:"Client reported this amount verbally. A payment confirmation is required before it can be verified.",
+   hist:[["Jul 30","Client reported $2,500 (unverified — no document)"]]},
+ ]},
+];
+
+const THREADS = [
+ {id:"t1", title:"1099-DIV Box 1a legibility", link:{label:"1040 line 3b — Ordinary dividends", field:"3b"}, unread:true,
+  msgs:[
+   {who:"Dana Reyes", tag:"internal", when:"Aug 3, 2:14 PM", text:"Extraction confidence on Box 1a is 71% — the scan has a fold across the amount. I read it as 1,893.40 but want the client to re-upload before I verify."},
+   {who:"Dana Reyes", tag:"client", when:"Aug 3, 2:16 PM", text:"Hi Marcus — the Vanguard 1099-DIV you sent has a fold across one of the amounts. Could you re-upload a flat scan or the PDF from Vanguard's site? That's the last thing I need on dividends."},
+   {who:"Marcus Chen", tag:"client", when:"Aug 4, 9:02 AM", text:"Ah sorry about that — I'll download the PDF from Vanguard tonight."},
+  ],
+  request:{text:"Re-upload: Vanguard 1099-DIV (clean copy)", owner:"Marcus Chen", due:"Aug 7", status:"Waiting on client", docKey:"reupload"}},
+ {id:"t2", title:"Q2 estimated payment confirmation", link:{label:"Estimated payments, Q2", field:"—"}, unread:false,
+  msgs:[
+   {who:"Marcus Chen", tag:"client", when:"Jul 30, 5:41 PM", text:"I made a $2,500 estimated payment in June through IRS Direct Pay, if that matters."},
+   {who:"Dana Reyes", tag:"client", when:"Jul 31, 8:20 AM", text:"It does — thanks for flagging. Could you send the Direct Pay confirmation email or a bank statement line showing it? I can't apply it to the return without documentation."},
+   {who:"Dana Reyes", tag:"internal", when:"Jul 31, 8:21 AM", text:"Note for review: do NOT verify line 25 payments until this lands. Client is reliable but we've had Direct Pay amounts remembered wrong before."},
+  ],
+  request:{text:"Upload: IRS Direct Pay confirmation ($2,500, June)", owner:"Marcus Chen", due:"Aug 8", status:"Waiting on client", docKey:"directpay"}},
+];
+
+const QUEUE = [
+ {rank:1, title:"Chen, Marcus — 1040 · TY2025", tone:"bad", why:["Blocked 3 days","— waiting on 2 client documents; due-date risk if not received by Aug 8"], due:"Due Aug 15", chips:["blocked"], cta:"Open return →", ret:true},
+ {rank:2, title:"Okafor, Adaeze — 1040 + Sch C", tone:"warn", why:["4 AI fields below 80% confidence","need manual verification before review handoff"], due:"Due Aug 18", chips:["ai"], cta:"Review fields →"},
+ {rank:3, title:"Patel Family Trust — 1041", tone:"warn", why:["Reviewer returned with 2 open comments","you own the next action"], due:"Due Aug 20", chips:["client"], cta:"See comments →"},
+ {rank:4, title:"Lindgren, Sofia — 1040", tone:"good", why:["All fields verified","ready to send to reviewer"], due:"Due Aug 22", chips:["verified"], cta:"Send to review →"},
+];
+
+/* ---- Challenge 09: deterministic large dataset (seeded PRNG, no libraries) ---- */
+function makeItems(){
+  let s=42; const rnd=()=>((s=(s*1103515245+12345)&0x7fffffff)/0x7fffffff);
+  const pick=a=>a[Math.floor(rnd()*a.length)];
+  const T={
+    Document:{n:118,names:["1099-B page","Brokerage statement","K-1 attachment","Receipt","Charitable letter","Property tax bill","1098 mortgage stmt","HSA form 5498","Prior-year return page","Bank statement"]},
+    Question:{n:96,names:["Confirm filing status detail","Dependent residency months","Home office sq footage","Vehicle business-use %","Crypto disposals?","Foreign account over $10k?","529 contributions","Energy credit eligibility","Estimated payment dates","Moving expense detail"]},
+    Calculation:{n:88,names:["QBI deduction step","AMT worksheet line","Capital loss carryover","SE tax computation","Child tax credit phase-out","Std vs itemized compare","State apportionment","Safe harbor test","Underpayment penalty est.","NIIT threshold check"]},
+    Warning:{n:34,names:["Value differs from prior year >40%","Duplicate document detected","Missing payer TIN","Rounding mismatch","Unusually high deduction ratio","Date outside tax year","Possible duplicate 1099","Address mismatch vs W-2","Negative basis flagged","Unmapped document page"]},
+    Message:{n:48,names:["Client reply","Reviewer note","Document request","Clarification thread","Sign-off comment","Follow-up reminder"]},
+  };
+  const out=[]; let id=1;
+  for(const [type,cfg] of Object.entries(T)){
+    for(let i=0;i<cfg.n;i++){
+      const r=rnd();
+      const status=type==="Warning" ? (r<.7?"open":"resolved")
+                  : r<.06?"blocked" : r<.28?"open" : "resolved";
+      out.push({id:id++,type,name:pick(cfg.names)+" #"+String(100+i),status,
+                when:"Jul "+(15+Math.floor(rnd()*17))});
+    }
+  }
+  return out;
+}
+const ITEMS = makeItems();
+
+/* ---------------- state + routing ---------------- */
+const S = {
+  role:"preparer", view:"dash", tab:"review", sel:null, correcting:false,
+  thread:"t1", composeMode:"client", filter:"all",
+  itemQ:"", itemType:"All", itemStatus:"All", openGroups:{},
+  reuploaded:false, directPayUploaded:false, clientVisited:false,
+  pal:{open:false,q:"",idx:0},
+};
+const fmt=n=>n.toLocaleString("en-US",{minimumFractionDigits:2});
+const $=id=>document.getElementById(id);
+const esc=t=>t.replace(/'/g,"\'");
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
+function findField(line){for(const sc of FIELDS){const r=sc.rows.find(x=>x.line===line);if(r)return r;}return null;}
+function log(f,text){f.hist=f.hist||[];f.hist.push(["just now",text]);}
+
+/* Challenge 04: deep linking. State ⇄ URL hash; browser back/forward restores workflow. */
+let hashLock=false;
+function writeHash(){
+  hashLock=true;
+  const parts=[S.role,S.view]; if(S.view==="return"){parts.push(S.tab); if(S.tab==="review"&&S.sel)parts.push(S.sel); if(S.tab==="msgs")parts.push(S.thread);}
+  location.hash="/"+parts.join("/");
+  setTimeout(()=>hashLock=false,0);
+}
+function applyHash(){
+  if(hashLock)return;
+  const p=location.hash.replace(/^#\//,"").split("/").filter(Boolean);
+  if(!p.length)return;
+  S.role=p[0]==="client"?"client":"preparer";
+  S.view=p[1]==="return"?"return":(S.role==="client"?"return":"dash");
+  if(S.view==="return"){S.tab=p[2]||(S.role==="client"?"home":"review");
+    if(S.tab==="review")S.sel=p[3]||null; if(S.tab==="msgs"&&p[3])S.thread=p[3];}
+  render(false);
+}
+window.addEventListener("hashchange",applyHash);
+
+function go(v,t){S.view=v;if(t)S.tab=t;S.sel=null;S.correcting=false;render();window.scrollTo({top:0});}
+function setTab(t){S.tab=t;S.sel=null;S.correcting=false;render();}
+function setRole(r){
+  S.role=r; S.correcting=false; S.sel=null;
+  if(r==="client"){S.view="return";S.tab="home";}
+  else {S.view=S.view==="return"?"return":"dash"; if(S.tab==="home")S.tab="review";}
+  render(); window.scrollTo({top:0});
+  toast(r==="client"?"Viewing as Marcus Chen (client). Internal firm content is now structurally absent.":"Back to Dana Reyes (preparer).");
+}
+
+/* ---------------- shared UI atoms ---------------- */
+function chip(state, extra){
+  const m={ai:['chip-ai','<span class="dot dot-ai"></span>AI · unverified'],
+           verified:['chip-verified','✓ Verified'],
+           locked:['chip-locked','🔒 Calculated'],
+           blocked:['chip-blocked','<span class="dot dot-red"></span>Blocked'],
+           client:['chip-client','Client action'],
+           diff:['chip-diff','⇄ New extraction']};
+  const c=m[state];return `<span class="chip ${c[0]}">${extra||c[1]}</span>`;
+}
+
+function renderSidebar(){
+  if(S.role==="client"){
+    $("sidebar").innerHTML=`
+      <div class="logo"><div class="logo-mark">GG</div>GreenGrowth</div>
+      <div class="nav-label">Your workspace</div>
+      <button class="nav-btn ${S.tab==='home'?'active':''}" onclick="setTab('home')"><span class="ico">🏠</span>Your return</button>
+      <button class="nav-btn ${S.tab==='docs'?'active':''}" onclick="setTab('docs')"><span class="ico">📎</span>Documents</button>
+      <button class="nav-btn ${S.tab==='msgs'?'active':''}" onclick="setTab('msgs')"><span class="ico">💬</span>Messages</button>
+      <div class="sidebar-foot"><b>Marcus Chen</b>Client · TY2025 return</div>`;
+    return;
+  }
+  $("sidebar").innerHTML=`
+    <div class="logo"><div class="logo-mark">GG</div>GreenGrowth</div>
+    <div class="nav-label">Workspace</div>
+    <button class="nav-btn ${S.view==='dash'?'active':''}" onclick="go('dash')"><span class="ico">▦</span>My Work</button>
+    <button class="nav-btn" onclick="toast('Simulated — client list not in scope for this prototype')"><span class="ico">👥</span>Clients</button>
+    <button class="nav-btn" onclick="toast('Simulated — firm reporting not in scope')"><span class="ico">📈</span>Reports</button>
+    <div class="nav-label">Open return</div>
+    <button class="nav-btn ${S.view==='return'?'active':''}" onclick="go('return')"><span class="ico">📄</span>Chen — 1040</button>
+    <div class="sidebar-foot"><b>Dana Reyes</b>Senior Preparer · GGCPA</div>`;
+}
+
+function renderTopbar(){
+  let h='';
+  if(S.role==="preparer"){
+    h+='<button onclick="go(\'dash\')">My Work</button>';
+    if(S.view==="return"){
+      const names={review:"Return review",docs:"Documents",msgs:"Messages",items:"All items"};
+      h+=`<span class="sep">/</span><button onclick="setTab('review')">Chen, Marcus — 1040 · TY2025</button><span class="sep">/</span><span class="here">${names[S.tab]||"Return review"}</span>`;
+    }
+  } else {
+    const names={home:"Your return",docs:"Documents",msgs:"Messages"};
+    h+=`<span class="here">Marcus Chen — TY2025</span><span class="sep">/</span><span class="here">${names[S.tab]||"Your return"}</span>`;
+  }
+  $("crumbs").innerHTML=h;
+  $("topctl").innerHTML=`
+    <button class="kbtn" onclick="openPalette()" title="Jump anywhere">⌘K <span class="kbtn-l">Jump to…</span></button>
+    <div class="roleswitch" role="group" aria-label="Prototype role switcher">
+      <span class="rs-l">Role demo</span>
+      <button class="${S.role==='preparer'?'on':''}" onclick="setRole('preparer')">Dana · Preparer</button>
+      <button class="${S.role==='client'?'on':''}" onclick="setRole('client')">Marcus · Client</button>
+    </div>`;
+}
+
+/* ---------------- preparer: dashboard (07) ---------------- */
+function renderDash(){
+  const rows=QUEUE.filter(q=>S.filter==="all"?true:S.filter==="blocked"?q.chips.includes("blocked"):S.filter==="ai"?q.chips.includes("ai"):q.chips.includes("verified"));
+  return `
+  <div class="page-head"><h1>Good morning, Dana</h1><p>Ranked by what needs you first — deadline risk, blockers, and low-confidence AI fields, in that order.</p></div>
+  <div class="stat-row">
+    <div class="stat"><div class="k">Returns you own</div><div class="v num">14</div></div>
+    <div class="stat"><div class="k">Blocked on clients</div><div class="v num red">3</div></div>
+    <div class="stat"><div class="k">AI fields to verify</div><div class="v num amber">11</div></div>
+    <div class="stat"><div class="k">Ready for review</div><div class="v num green">2</div></div>
+  </div>
+  <div class="queue">
+    <div class="queue-head">
+      <div><h2>Work on this now</h2><div class="sub">Priority = days-to-deadline ÷ (open blockers + unverified fields). Simple, explainable, and shown on every row.</div></div>
+      <div class="filters">
+        ${[["all","All"],["blocked","Blocked"],["ai","Needs verification"],["ok","Ready"]].map(([k,l])=>`<button class="filter-btn ${S.filter===k?'active':''}" onclick="S.filter='${k}';render()">${l}</button>`).join("")}
+      </div>
+    </div>
+    ${rows.map(q=>`
+      <button class="q-row" onclick="${q.ret?"go('return','review')":"toast('Only the Chen return is wired up in this prototype')"}">
+        <span class="q-rank num">${q.rank}</span>
+        <span class="q-main"><span class="q-title">${q.title}</span>
+          <span class="q-why"><b class="${q.tone}">${q.why[0]}</b> ${q.why[1]}</span></span>
+        <span class="q-meta"><span>${q.chips.map(c=>chip(c)).join(" ")}</span><span class="q-due">${q.due}</span></span>
+        <span class="q-cta">${q.cta}</span>
+      </button>`).join("")}
+    ${rows.length?"":'<div class="empty-note">Nothing in this filter. Clear it to see your full queue.</div>'}
+  </div>`;
+}
+
+/* ---------------- return header + status (06) ---------------- */
+function blockedCount(){return (S.reuploaded?0:1)+(S.directPayUploaded?0:1);}
+function renderRetHead(){
+  const steps=[["Docs in","Jul 28",1],["Prepared","Aug 3",1],["Verify fields","now",2],["Firm review","",0],["Client sign-off","",0],["Filed","",0]];
+  const nb=blockedCount();
+  const toVerify=FIELDS.flatMap(s=>s.rows).filter(f=>f.state==="ai").length;
+  const client=S.role==="client";
+  const strip = client
+    ? (nb? `⏳&nbsp;<span><b>Your move:</b> ${nb} quick upload${nb>1?"s":""}. Dana is verifying figures in parallel — nothing else needs you.</span>`
+         : `✓&nbsp;<span><b>Nothing needs you right now.</b> Dana is finishing verification; you'll be asked to review and sign next.</span>`)
+    : (nb? `⏳&nbsp;<span><b>Next action: Marcus Chen</b> — ${S.reuploaded?"":"re-upload 1099-DIV"}${!S.reuploaded&&!S.directPayUploaded?" and ":""}${S.directPayUploaded?"":"send Q2 payment confirmation"}. You verify remaining AI fields in parallel.</span>`
+         : `✓&nbsp;<span><b>Next action: you.</b> All client documents are in — finish verification and send to J. Whitfield for review.</span>`);
+  const tabs = client ? "" : `
+  <div class="tabs">
+    <button class="tab ${S.tab==='review'?'active':''}" onclick="setTab('review')">Return review <span style="font-weight:400;color:var(--ink-3)">· ${toVerify} to verify</span></button>
+    <button class="tab ${S.tab==='docs'?'active':''}" onclick="setTab('docs')">Documents</button>
+    <button class="tab ${S.tab==='msgs'?'active':''}" onclick="setTab('msgs')">Messages${THREADS.some(t=>t.unread)?'<span class="badge">1</span>':''}</button>
+    <button class="tab ${S.tab==='items'?'active':''}" onclick="setTab('items')">All items <span style="font-weight:400;color:var(--ink-3)">· ${ITEMS.length}</span></button>
+  </div>`;
+  return `
+  <div class="ret-head">
+    <div class="ret-head-top">
+      <div><div class="ret-title">${client?"Your 2025 federal return":"Marcus Chen — Form 1040 · Tax year 2025"}</div>
+      <div class="ret-sub">${client?"Prepared by Dana Reyes, GGCPA · Filing deadline Aug 15":"Preparer: Dana Reyes &nbsp;·&nbsp; Reviewer: J. Whitfield &nbsp;·&nbsp; Filing deadline Aug 15 (extension)"}</div></div>
+      <div>${nb?chip("blocked",`<span class='dot dot-red'></span>${nb} item${nb>1?"s":""} waiting on ${client?"you":"client"}`):chip("verified","On track")}</div>
+    </div>
+    <div class="pipeline">
+      ${steps.map(([n,d,st])=>`<div class="pstep ${st===1?'done':st===2?'now':''}"><div class="p-dot">${st===1?'✓':''}</div><div class="p-name">${n}</div><div class="p-date">${d}</div></div>`).join("")}
+    </div>
+    <div class="owner-strip ${nb?"":"ok"}">${strip}</div>
+  </div>${tabs}`;
+}
+
+/* ---------------- review + trace (01, 08, 10) ---------------- */
+function fieldRow(f){
+  const traceable=f.state!=="blocked";
+  const sel=S.sel===f.line;
+  const stateChips={ai:chip("ai"),verified:chip("verified"),locked:chip("locked"),blocked:chip("blocked")};
+  return `<button class="field ${traceable?'traceable':''} ${f.state} ${sel?'selected':''}"
+    onclick="${traceable?`selectField('${f.line}')`:`toast('Blocked: ${esc(f.blockWhy)}')`}" aria-expanded="${sel}">
+    <span class="f-line">${f.line}</span>
+    <span class="f-label">${f.label}<small>${f.sub}</small></span>
+    <span class="f-val num">$${fmt(f.val)}</span>
+    <span class="f-state">${f.prop?chip("diff"):stateChips[f.state]}</span>
+    <span class="f-trace-hint">${f.state==="locked"?"How? →":"Trace →"}</span>
+  </button>`;
+}
+function selectField(line){S.sel=S.sel===line?null:line;S.correcting=false;render();}
+function jumpToField(line){S.role="preparer";S.view="return";S.tab="review";S.sel=line;render();toast("Jumped to line "+line+" — trace panel open");}
+
+function renderTrace(){
+  if(!S.sel) return `<div class="trace"><div class="trace-empty"><div class="big">⇢</div><b>Select any value to trace it</b><div class="note" style="margin-top:6px">Every number on this return links back to a source document, the exact box it came from, and any math applied on the way. Nothing here asks to be taken on faith.</div><div class="note" style="margin-top:10px"><span class="kbd">↑</span><span class="kbd">↓</span> move between fields · <span class="kbd">V</span> verify · <span class="kbd">⌘K</span> jump anywhere</div></div></div>`;
+  const f=findField(S.sel);
+  const doc=f.doc?DOCS[f.doc]:null;
+  const confColor=f.conf>=90?"var(--green)":f.conf>=80?"var(--amber)":"var(--red)";
+  return `<div class="trace">
+    <div class="trace-head"><div class="t">Line ${f.line} — ${f.label}</div><div class="s">${f.state==="locked"?"Calculated on-platform":"Traced to "+doc.name}</div></div>
+    <div class="trace-body">
+      ${f.prop?`
+      <div class="diff-box">
+        <b>⇄ New extraction from re-uploaded document</b>
+        <div class="diff-cmp"><span>Current<br><span class="num">$${fmt(f.val)}</span> <small>(${f.conf}% conf)</small></span><span class="diff-arrow">→</span><span>Proposed<br><span class="num">$${fmt(f.prop.val)}</span> <small>(${f.prop.conf}% conf)</small></span></div>
+        <div class="note">${f.prop.note} The value never changes silently — a human accepts or declines every AI update.</div>
+        <div style="display:flex;gap:8px;margin-top:9px">
+          <button class="btn btn-primary" onclick="acceptProposal('${f.line}')">Accept $${fmt(f.prop.val)}</button>
+          <button class="btn" onclick="declineProposal('${f.line}')">Keep current</button>
+        </div>
+      </div>`:""}
+      ${doc?`
+      <div class="doc-mock">
+        <div class="doc-t"><span>${doc.kind}</span><span>TY 2025</span></div>
+        ${doc.render.map(([l,v,key])=>`<div class="doc-row ${key===f.hl?'hl':''}"><span>${l}</span><span class="num">${v}</span></div>`).join("")}
+      </div>
+      <div class="doc-cap"><span>${doc.name}</span><span>p.1 of ${doc.pages} · uploaded ${doc.uploaded}</span></div>`:""}
+      ${f.conf&&!f.prop?`<div class="conf"><span style="font-weight:600">Extraction confidence</span><div class="conf-bar"><div class="conf-fill" style="width:${f.conf}%;background:${confColor}"></div></div><span class="num" style="font-weight:700;color:${confColor}">${f.conf}%</span></div>`:""}
+      ${f.warn&&!f.prop?`<div class="correct-box" style="margin-bottom:12px"><b style="font-size:.82rem">⚠ Why confidence is low</b><div class="note" style="margin-top:3px">${f.warn}</div></div>`:""}
+      <div class="chain">
+        ${f.chain.map((c,i)=>`<div class="ch-step ${i===0?'src':i===f.chain.length-1?'dst':''}"><span class="k">${c.k}</span><span class="num">${c.v}</span></div>`).join("")}
+      </div>
+      ${f.state==="locked"?`<div class="note">🔒 ${f.lockWhy}</div>`:""}
+      ${f.verifiedBy?`<div class="note">✓ Verified by ${f.verifiedBy}. Verifying locks the value against silent AI updates; a re-extraction reopens it with a visible diff.</div>`:""}
+      ${S.correcting?`
+      <div class="correct-box">
+        <label for="cx">Correct value for line ${f.line}</label>
+        <input id="cx" class="num" value="${fmt(f.val)}" aria-label="Corrected value">
+        <div class="note" style="margin-bottom:8px">Your correction replaces the AI value, is attributed to you, and keeps the original extraction in the audit trail. The AI is never silently right or silently wrong.</div>
+        <button class="btn btn-primary" onclick="applyCorrection('${f.line}')">Save correction</button>
+        <button class="btn" onclick="S.correcting=false;render()">Cancel</button>
+      </div>`:""}
+      ${f.hist&&f.hist.length?`<div class="hist"><div class="hist-t">Field history</div>${f.hist.map(([w,t])=>`<div class="hist-row"><span class="hist-when">${w}</span><span>${t}</span></div>`).join("")}</div>`:""}
+    </div>
+    ${f.state==="ai"&&!f.prop?`<div class="trace-actions">
+      <button class="btn btn-primary" onclick="verifyField('${f.line}')">✓ Verify — matches source</button>
+      <button class="btn" onclick="S.correcting=true;render()">Correct it</button>
+    </div>`:f.state==="verified"&&!f.prop?`<div class="trace-actions"><button class="btn btn-danger-ghost" onclick="unverify('${f.line}')">Reopen verification</button></div>`:""}
+  </div>`;
+}
+function verifyField(line){const f=findField(line);f.state="verified";f.verifiedBy="Dana Reyes · just now";log(f,"Verified against source — Dana Reyes");toast("Line "+line+" verified — locked against silent updates");render();}
+function unverify(line){const f=findField(line);f.state="ai";delete f.verifiedBy;log(f,"Verification reopened — Dana Reyes");toast("Line "+line+" reopened for verification");render();}
+function applyCorrection(line){const f=findField(line);const v=parseFloat($("cx").value.replace(/,/g,""));if(!isNaN(v)){log(f,`Corrected $${fmt(f.val)} → $${fmt(v)} — Dana Reyes (AI original kept in trail)`);f.val=v;}f.state="verified";f.verifiedBy="Dana Reyes (manual correction) · just now";S.correcting=false;toast("Correction saved and attributed to you");render();}
+function acceptProposal(line){const f=findField(line);log(f,`Accepted re-extraction $${fmt(f.val)} → $${fmt(f.prop.val)} (${f.prop.conf}%) — Dana Reyes`);f.val=f.prop.val;f.conf=f.prop.conf;delete f.warn;delete f.prop;f.state="verified";f.verifiedBy="Dana Reyes (accepted re-extraction) · just now";toast("New value accepted and verified");render();}
+function declineProposal(line){const f=findField(line);log(f,"Declined re-extraction; kept $"+fmt(f.val)+" — Dana Reyes");delete f.prop;toast("Kept current value — decision logged");render();}
+
+function renderReview(){
+  return renderRetHead()+`<div class="review-grid">
+    <div class="form-card">
+      ${FIELDS.map(s=>`<div class="form-sec"><h3>${s.sec}</h3>${s.rows.map(fieldRow).join("")}</div>`).join("")}
+    </div>
+    ${renderTrace()}
+  </div>`;
+}
+
+/* ---------------- documents (both roles) ---------------- */
+function renderDocs(){
+  const client=S.role==="client";
+  const items=Object.entries(DOCS).map(([k,d])=>{
+    const used=FIELDS.flatMap(s=>s.rows).filter(f=>f.doc===k);
+    const allOk=used.every(f=>f.state==="verified");
+    const right = client
+      ? (allOk?chip("verified","✓ Processed"):chip("ai","Being verified"))
+      : (allOk?chip("verified","✓ All lines verified"):chip("ai",used.filter(f=>f.state==="ai").length+" line(s) to verify"))+' <span class="q-cta">Trace →</span>';
+    return `<button class="doc-item" ${client?'style="cursor:default"':''} onclick="${client?"void 0":`jumpToField('${used[0].line}')`}">
+      <span class="doc-ico">${d.kind}</span>
+      <span><span class="doc-name">${d.name}</span><br><span class="doc-sub">Uploaded ${d.uploaded} by ${d.by} · ${client?"feeds your return automatically":"feeds "+used.length+" return line"+(used.length>1?"s":"")}</span></span>
+      <span class="doc-right">${right}</span>
+    </button>`;}).join("");
+  const reqRow=(done,name,sub,act,threadId)=> done
+    ? `<div class="doc-item" style="cursor:default"><span class="doc-ico">✓</span><span><span class="doc-name">${name}</span><br><span class="doc-sub">Received just now — thank you</span></span><span class="doc-right">${chip("verified","✓ Received")}</span></div>`
+    : `<div class="doc-item" style="cursor:default"><span class="doc-ico" style="border-style:dashed">?</span>
+        <span><span class="doc-name">${name}</span><br><span class="doc-sub">${sub}</span></span>
+        <span class="doc-right">${chip("blocked","Awaiting upload")}${client?`<button class="btn btn-primary" onclick="${act}">Upload (simulated)</button>`:`<button class="btn" onclick="openThread('${threadId}')">Open thread →</button>`}</span></div>`;
+  return renderRetHead()+`<div class="doc-list">${items}
+    ${reqRow(S.reuploaded,"Vanguard 1099-DIV — clean copy", (client?"Dana asked for a flat scan — the first one had a fold":"Requested Aug 3 · owner: Marcus Chen · due Aug 7"),"simulateReupload()","t1")}
+    ${reqRow(S.directPayUploaded,"IRS Direct Pay confirmation",(client?"Confirms your $2,500 June estimated payment":"Requested Jul 31 · owner: Marcus Chen · due Aug 8"),"simulateDirectPay()","t2")}
+  </div>
+  <p class="note" style="margin-top:12px">${client?"Anything we still need from you appears here with an upload button — never buried in an email.":"Documents aren't a folder — they're the other end of the trace. Each one shows which return lines depend on it, and a missing document is a first-class object with an owner and a due date."}</p>`;
+}
+function simulateReupload(){
+  S.reuploaded=true;
+  const f=findField("3b");
+  f.prop={val:1898.40,conf:99,note:"The clean PDF resolved the fold: the AI now reads Box 1a as $1,898.40 at 99% confidence (the fold had hidden the final digits)."};
+  log(f,"Client re-uploaded clean 1099-DIV → re-extraction proposed $1,898.40 (99%)");
+  const t=THREADS.find(x=>x.id==="t1"); t.request.status="Received ✓";
+  t.msgs.push({who:"Marcus Chen",tag:"client",when:"just now",text:"Done — uploaded the clean PDF from Vanguard."});
+  render();
+  toast("Uploaded. Switch to Dana's view: line 3b now shows a re-extraction diff to accept or decline.");
+}
+function simulateDirectPay(){
+  S.directPayUploaded=true;
+  const f=findField("—"); f.state="ai"; f.conf=97; f.sub="IRS Direct Pay confirmation · uploaded just now";
+  f.chain=[{k:"Source",v:"$2,500.00 · Direct Pay confirmation"},{k:"Transform",v:"Applied to estimated payments"},{k:"Return field",v:"$2,500.00 · Form 1040, line 26"}];
+  delete f.blockWhy; log(f,"Confirmation uploaded by client → extracted $2,500.00 (97%), awaiting verification");
+  const t=THREADS.find(x=>x.id==="t2"); t.request.status="Received ✓";
+  render(); toast("Uploaded. The blocked field is now an unverified AI field on Dana's side.");
+}
+
+/* ---------------- messages (02, role-filtered) ---------------- */
+function openThread(id){S.view="return";S.tab="msgs";S.thread=id;const t=THREADS.find(x=>x.id===id);t.unread=false;render();}
+function renderMsgs(){
+  const client=S.role==="client";
+  const t=THREADS.find(x=>x.id===S.thread);
+  const visible=client? t.msgs.filter(m=>m.tag!=="internal") : t.msgs;
+  const hiddenCount=t.msgs.length-visible.length;
+  if(client&&S.composeMode==="internal")S.composeMode="client";
+  return renderRetHead()+`<div class="msg-wrap">
+    <div class="thread-list">
+      ${THREADS.map(x=>`<button class="th-item ${x.id===S.thread?'active':''}" onclick="openThread('${x.id}')">
+        <span class="th-title">${x.title} ${x.unread&&!client?'<span class="dot dot-red"></span>':''}</span>
+        <span class="th-sub">${x.request.status} · due ${x.request.due}</span>
+      </button>`).join("")}
+      <div class="empty-note">Threads exist only attached to a field, document, or task. There is no general inbox to lose things in.</div>
+    </div>
+    <div class="thread">
+      <div class="thread-head">
+        <div class="t">${t.title}</div>
+        ${client?"":`<button class="linked" onclick="jumpToField('${t.link.field}')">⇢ ${t.link.label}</button>`}
+      </div>
+      <div class="msgs">
+        ${visible.map(m=>{
+          const mine = client ? m.who==="Marcus Chen" : m.who==="Dana Reyes";
+          const cls=m.tag==="internal"?"internal":(mine?"me":"them");
+          const tag=m.tag==="internal"?'<span class="tag">🔒 INTERNAL — never visible to client</span>':(!client&&m.who==="Dana Reyes"?'<span style="color:var(--blue)">→ client-visible</span>':'');
+          return `<div class="msg ${cls}"><div class="who">${m.who} ${tag} <span class="when">${m.when}</span></div>${m.text}</div>`;}).join("")}
+        ${client&&hiddenCount?`<div class="demo-note">Prototype annotation — not product UI: ${hiddenCount} internal firm note${hiddenCount>1?"s are":" is"} structurally absent from this view, not hidden by CSS. The client role's render path never receives them.</div>`:""}
+        <div class="req">📎 <span><b>${t.request.status==="Received ✓"?"Request complete:":"Open request:"}</b> ${t.request.text}</span><span>${t.request.status==="Received ✓"?chip("verified","✓ Received"):chip("client","Owner: "+(client?"You":t.request.owner))} <span class="q-due" style="margin-left:6px">Due ${t.request.due}</span></span></div>
+      </div>
+      <div class="composer">
+        ${client?"":`<div class="mode-toggle">
+          <button class="${S.composeMode==='client'?'on-client':''}" onclick="S.composeMode='client';render()">To client</button>
+          <button class="${S.composeMode==='internal'?'on-internal':''}" onclick="S.composeMode='internal';render()">Internal note</button>
+        </div>`}
+        <textarea id="draft" placeholder="${client?"Message Dana…":(S.composeMode==='client'?'Message Marcus… (client will see this)':'Internal note… (never leaves the firm)')}"></textarea>
+        <div class="row">
+          <span class="hint">${client?"Your message attaches to this request, so nothing gets lost.":(S.composeMode==='client'?'Visible to the client and timestamped on the return.':'🔒 Dashed amber = internal. The distinction is visual, structural, and chosen per message — not a checkbox you forget.')}</span>
+          <button class="btn btn-primary" onclick="sendMsg()">${client?"Send to Dana":(S.composeMode==='client'?'Send to client':'Save internal note')}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function sendMsg(){
+  const d=$("draft");if(!d.value.trim()){toast("Write something first");return;}
+  const t=THREADS.find(x=>x.id===S.thread);
+  const who=S.role==="client"?"Marcus Chen":"Dana Reyes";
+  const tag=S.role==="client"?"client":S.composeMode;
+  t.msgs.push({who,tag,when:"just now",text:d.value.trim()});
+  toast(S.role==="client"?"Sent to Dana":(S.composeMode==="client"?"Sent to Marcus":"Internal note saved — client cannot see this"));render();
+}
+
+/* ---------------- all items (09): scale, search, hierarchy ---------------- */
+function renderItems(){
+  const q=S.itemQ.trim().toLowerCase();
+  const match=ITEMS.filter(it=>
+    (S.itemType==="All"||it.type===S.itemType) &&
+    (S.itemStatus==="All"||it.status===S.itemStatus) &&
+    (!q||it.name.toLowerCase().includes(q)||it.type.toLowerCase().includes(q)));
+  const groups={};
+  for(const it of match)(groups[it.type]=groups[it.type]||[]).push(it);
+  const open=ITEMS.filter(i=>i.status==="open").length, blocked=ITEMS.filter(i=>i.status==="blocked").length;
+  const gHtml=Object.entries(groups).map(([type,arr])=>{
+    const isOpen=!!S.openGroups[type]||!!q;
+    const shown=isOpen?arr.slice(0,S.openGroups[type]==="all"?arr.length:40):[];
+    const openCt=arr.filter(i=>i.status!=="resolved").length;
+    return `<div class="ig">
+      <button class="ig-head" onclick="S.openGroups['${type}']=${isOpen&&!q?"false":"true"};render()" aria-expanded="${isOpen}">
+        <span class="ig-caret">${isOpen?"▾":"▸"}</span><b>${type}s</b>
+        <span class="ig-sum">${arr.length} item${arr.length!==1?"s":""}${openCt?` · <b class="warn">${openCt} need attention</b>`:" · all resolved"}</span>
+      </button>
+      ${shown.map(it=>`<div class="ig-row">
+        <span class="ig-name">${hlq(it.name,q)}</span>
+        <span class="ig-when">${it.when}</span>
+        <span>${it.status==="resolved"?chip("verified","Resolved"):it.status==="blocked"?chip("blocked"):chip("ai","Open")}</span>
+      </div>`).join("")}
+      ${isOpen&&arr.length>shown.length?`<button class="ig-more" onclick="S.openGroups['${type}']='all';render()">Show all ${arr.length} ${type.toLowerCase()}s</button>`:""}
+    </div>`;}).join("");
+  return renderRetHead()+`
+  <div class="items-bar">
+    <input id="itemq" type="search" placeholder="Search ${ITEMS.length} items on this return…" value="${S.itemQ.replace(/"/g,'&quot;')}"
+      oninput="S.itemQ=this.value;render();document.getElementById('itemq').focus();var v=this.value;var el=document.getElementById('itemq');el.setSelectionRange(v.length,v.length)">
+    <div class="filters">
+      ${["All","Document","Question","Calculation","Warning","Message"].map(t=>`<button class="filter-btn ${S.itemType===t?'active':''}" onclick="S.itemType='${t}';render()">${t==="All"?"All types":t+"s"}</button>`).join("")}
+    </div>
+    <div class="filters">
+      ${["All","open","blocked","resolved"].map(st=>`<button class="filter-btn ${S.itemStatus===st?'active':''}" onclick="S.itemStatus='${st}';render()">${st==="All"?"Any status":st[0].toUpperCase()+st.slice(1)}</button>`).join("")}
+    </div>
+  </div>
+  <div class="items-sum">${ITEMS.length} items on this return · <b class="warn">${open} open</b> · <b class="bad">${blocked} blocked</b> · showing ${match.length}${q?` for “${S.itemQ}”`:""}</div>
+  <div class="queue">${gHtml||'<div class="empty-note">No items match. Clear the search or filters above.</div>'}</div>
+  <p class="note" style="margin-top:12px">Groups open on demand and long lists reveal in slices — the complexity is real (${ITEMS.length} generated items) but the default view is five lines. Search flattens the hierarchy; clearing it restores your place.</p>`;
+}
+function hlq(text,q){if(!q)return text;const i=text.toLowerCase().indexOf(q);if(i<0)return text;return text.slice(0,i)+"<mark>"+text.slice(i,i+q.length)+"</mark>"+text.slice(i+q.length);}
+
+/* ---------------- client home (03 + 06) ---------------- */
+function renderClientHome(){
+  const tasks=[
+    {done:S.reuploaded, t:"Re-upload your Vanguard 1099-DIV", s:"The first scan had a fold across one amount — a clean PDF fixes it.", act:"setTab('docs')"},
+    {done:S.directPayUploaded, t:"Send your IRS Direct Pay confirmation", s:"Confirms the $2,500 estimated payment you made in June.", act:"setTab('docs')"},
+  ];
+  const todo=tasks.filter(t=>!t.done);
+  const first=!S.clientVisited; S.clientVisited=true;
+  return `
+  ${first?`<div class="welcome">
+    <h1>Welcome, Marcus 👋</h1>
+    <p>Your 2025 return is underway. <b>${todo.length?todo.length+" thing"+(todo.length>1?"s need":" needs")+" you":"Nothing needs you right now"}</b> — everything else is handled by Dana and her team.</p>
+  </div>`:""}
+  ${renderRetHead()}
+  <div class="tasks">
+    ${tasks.map((t,i)=>`<button class="task ${t.done?'done':''}" onclick="${t.done?"void 0":t.act}">
+      <span class="task-n">${t.done?"✓":i+1}</span>
+      <span class="task-main"><b>${t.t}</b><small>${t.s}</small></span>
+      ${t.done?chip("verified","Done"):'<span class="q-cta">Do it now →</span>'}
+    </button>`).join("")}
+  </div>
+  <p class="note" style="margin-top:12px">This screen is the whole product for a first-time client: the pipeline says where things stand, the amber strip says whose move it is, and the numbered list says exactly what to do first. Documents and Messages exist in the sidebar but nothing forces a tour.</p>`;
+}
+
+/* ---------------- ⌘K command palette (04) ---------------- */
+function paletteIndex(){
+  const ix=[];
+  if(S.role==="preparer"){
+    ix.push({t:"My Work — dashboard",k:"view",go:()=>go("dash")});
+    ix.push({t:"Chen return — Review fields",k:"view",go:()=>go("return","review")});
+    ix.push({t:"Chen return — All items",k:"view",go:()=>go("return","items")});
+    FIELDS.flatMap(s=>s.rows).filter(f=>f.state!=="blocked").forEach(f=>ix.push({t:`Line ${f.line} — ${f.label} ($${fmt(f.val)})`,k:"field",go:()=>jumpToField(f.line)}));
+    Object.values(DOCS).forEach((d,di)=>{const key=Object.keys(DOCS)[di];const used=FIELDS.flatMap(s=>s.rows).find(f=>f.doc===key);ix.push({t:d.name,k:"document",go:()=>jumpToField(used.line)});});
+  }
+  THREADS.forEach(t=>ix.push({t:"Thread: "+t.title,k:"message",go:()=>openThread(t.id)}));
+  if(S.role==="client"){ix.push({t:"Your return — home",k:"view",go:()=>setTab("home")});ix.push({t:"Documents",k:"view",go:()=>setTab("docs")});}
+  return ix;
+}
+function openPalette(){S.pal={open:true,q:"",idx:0};renderPalette();$("palq").focus();}
+function closePalette(){S.pal.open=false;$("pal").classList.remove("open");}
+function renderPalette(){
+  const el=$("pal");
+  if(!S.pal.open){el.classList.remove("open");return;}
+  const q=S.pal.q.toLowerCase();
+  const hits=paletteIndex().filter(x=>!q||x.t.toLowerCase().includes(q)).slice(0,9);
+  S.pal.idx=Math.min(S.pal.idx,Math.max(0,hits.length-1));
+  el.classList.add("open");
+  el.innerHTML=`<div class="pal-box" role="dialog" aria-label="Jump to">
+    <input id="palq" placeholder="Jump to a field, document, thread, or view…" value="${S.pal.q.replace(/"/g,'&quot;')}">
+    <div class="pal-list">${hits.map((h,i)=>`<button class="pal-it ${i===S.pal.idx?'sel':''}" onmouseenter="S.pal.idx=${i};renderPalette()" onclick="palGo(${i})"><span class="pal-k">${h.k}</span>${hlq(h.t,q)}</button>`).join("")||'<div class="empty-note">No matches.</div>'}</div>
+    <div class="pal-foot"><span class="kbd">↑↓</span> navigate · <span class="kbd">↵</span> open · <span class="kbd">esc</span> close</div>
+  </div>`;
+  const inp=$("palq");
+  inp.oninput=e=>{S.pal.q=e.target.value;S.pal.idx=0;renderPalette();const v=inp.value;$("palq").focus();$("palq").setSelectionRange(v.length,v.length);};
+  inp.onkeydown=e=>{
+    const hits2=paletteIndex().filter(x=>!S.pal.q||x.t.toLowerCase().includes(S.pal.q.toLowerCase())).slice(0,9);
+    if(e.key==="ArrowDown"){e.preventDefault();S.pal.idx=Math.min(S.pal.idx+1,hits2.length-1);renderPalette();$("palq").focus();}
+    else if(e.key==="ArrowUp"){e.preventDefault();S.pal.idx=Math.max(S.pal.idx-1,0);renderPalette();$("palq").focus();}
+    else if(e.key==="Enter"){e.preventDefault();palGo(S.pal.idx);}
+    else if(e.key==="Escape"){closePalette();}
+  };
+  inp.focus();
+}
+function palGo(i){
+  const q=S.pal.q.toLowerCase();
+  const hits=paletteIndex().filter(x=>!q||x.t.toLowerCase().includes(q)).slice(0,9);
+  if(!hits[i])return; closePalette(); hits[i].go();
+}
+
+/* ---------------- global keyboard ---------------- */
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();S.pal.open?closePalette():openPalette();return;}
+  if(S.pal.open)return;
+  const typing=/INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if(typing)return;
+  if(e.key==="Escape"&&S.sel){S.sel=null;S.correcting=false;render();return;}
+  if(S.role==="preparer"&&S.view==="return"&&S.tab==="review"){
+    const rows=FIELDS.flatMap(s=>s.rows).filter(f=>f.state!=="blocked");
+    const i=rows.findIndex(f=>f.line===S.sel);
+    if(e.key==="ArrowDown"){e.preventDefault();S.sel=rows[Math.min(i+1,rows.length-1)].line;S.correcting=false;render();}
+    else if(e.key==="ArrowUp"){e.preventDefault();S.sel=rows[Math.max(i-1,0)].line;S.correcting=false;render();}
+    else if(e.key.toLowerCase()==="v"&&S.sel){const f=findField(S.sel);if(f.state==="ai"&&!f.prop)verifyField(S.sel);}
+  }
+});
+
+/* ---------------- root ---------------- */
+function render(pushHash=true){
+  renderSidebar(); renderTopbar();
+  let body;
+  if(S.role==="client"){
+    body = S.tab==="docs"?renderDocs() : S.tab==="msgs"?renderMsgs() : renderClientHome();
+  } else {
+    body = S.view==="dash"?renderDash()
+         : S.tab==="review"?renderReview()
+         : S.tab==="docs"?renderDocs()
+         : S.tab==="items"?renderItems()
+         : renderMsgs();
+  }
+  $("content").innerHTML=body;
+  if(pushHash)writeHash();
+}
+applyHash(); render();
+
+</script>
+</body>
+</html>
