@@ -1,5 +1,5 @@
 # GreenGrowth Tax — Case Study Prototype
-**Candidate: Akash Sampath · akashsampath16@gmail.com**
+** Akash Sampath · akashsampath16@gmail.com**
 
 One working product covering **all ten challenges**, rather than ten disconnected demos — because the case study's hardest tensions (traceability, trust, status, roles, scale) only show up when the pieces have to coexist on the same screens. It's a preparer's workspace and a client's portal for a single return, sharing one codebase, one status model, and one visual language.
 
